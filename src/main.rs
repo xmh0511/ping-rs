@@ -59,12 +59,12 @@ fn main() -> Result<(), io::Error> {
             }
         }
     };
-    println!("destination ip: {}", dest_ip);
     let mut socket = IcmpSocket4::try_from(str_to_v4ip("0.0.0.0")?)?;
     let mut sequence = 0u16;
     loop {
         let packet = Icmpv4Packet::with_echo_request(1, sequence, "ping".into())?;
-        socket.set_timeout(Some(Duration::from_secs(5)));
+        socket.set_timeout(Some(Duration::from_secs(1)));
+		println!("PING {}", dest);
         let moment = socket
             .send_to(str_to_v4ip(&dest_ip)?, packet)
             .and_then(|_| Ok(Instant::now()))?;
@@ -79,7 +79,7 @@ fn main() -> Result<(), io::Error> {
                     } => {
                         let ip = *socket_addr.as_socket_ipv4().unwrap().ip();
                         println!(
-                            "Ping {} seq={} time={}ms size={}",
+                            "Ping {} icmp_seq={} time={}ms size={}",
                             ip,
                             sequence,
                             elapse.as_micros() as f64 / 1000.0,
