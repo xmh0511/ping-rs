@@ -61,10 +61,16 @@ fn main() -> Result<(), io::Error> {
     };
     let mut socket = IcmpSocket4::try_from(str_to_v4ip("0.0.0.0")?)?;
     let mut sequence = 0u16;
+    let payload: Vec<u8> = vec![
+        0x20, 0x20, 0x75, 0x73, 0x74, 0x20, 0x61, 0x20, 0x66, 0x6c, 0x65, 0x73, 0x68, 0x20, 0x77,
+        0x6f, 0x75, 0x6e, 0x64, 0x20, 0x20, 0x74, 0x69, 0x73, 0x20, 0x62, 0x75, 0x74, 0x20, 0x61,
+        0x20, 0x73, 0x63, 0x72, 0x61, 0x74, 0x63, 0x68, 0x20, 0x20, 0x6b, 0x6e, 0x69, 0x67, 0x68,
+        0x74, 0x73, 0x20, 0x6f, 0x66, 0x20, 0x6e, 0x69, 0x20, 0x20, 0x20,
+    ];
+	println!("PING {}: {} data bytes", dest, payload.len());
     loop {
-        let packet = Icmpv4Packet::with_echo_request(1, sequence, "ping".into())?;
+        let packet = Icmpv4Packet::with_echo_request(1, sequence, payload.clone())?;
         socket.set_timeout(Some(Duration::from_secs(1)));
-		println!("PING {}", dest);
         let moment = socket
             .send_to(str_to_v4ip(&dest_ip)?, packet)
             .and_then(|_| Ok(Instant::now()))?;
@@ -90,13 +96,13 @@ fn main() -> Result<(), io::Error> {
                         padding: _,
                         header: _,
                     } => {
-                        println!("timeout");
+                        println!("icmp_seq={} timeout", sequence);
                     }
                     Icmpv4Message::Unreachable {
                         padding: _,
                         header: _,
                     } => {
-                        println!("Destination: {dest_ip} is unreacheable");
+                        println!("{dest_ip} is unreacheable");
                         break;
                     }
                     _ => {}
